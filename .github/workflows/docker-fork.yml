@@ -1,4 +1,4 @@
-name: CICD DOcker
+name: CI/CD Docker
 
 on:
   push:
@@ -6,10 +6,7 @@ on:
       - main
 
 env:
-  # Ganti dengan nama image yang Anda inginkan
   IMAGE_NAME: suryapermana92/heyva-outline
-  # Nama sementara untuk base image lokal
-  LOCAL_BASE_IMAGE_NAME: heyva-outline-base
 
 jobs:
   build-and-push:
@@ -30,28 +27,24 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build base image (Step 1)
-        # Tahap ini membangun Dockerfile.base
-        # 'load: true' memuat hasilnya ke runner agar bisa dipakai di langkah selanjutnya
+      - name: Build and push base image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: Dockerfile.base
-          tags: ${{ env.LOCAL_BASE_IMAGE_NAME }}:latest
-          load: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: ${{ env.IMAGE_NAME }}:base
+          push: true
+          cache-from: type=registry,ref=${{ env.IMAGE_NAME }}:base
+          cache-to: type=inline
 
-      - name: Build and push final image (Step 2)
-        # Tahap ini membangun Dockerfile utama, menggunakan hasil dari langkah sebelumnya
-        # dan mendorong (push) image final ke Docker Hub
+      - name: Build and push final image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: Dockerfile
           build-args: |
-            BASE_IMAGE=${{ env.LOCAL_BASE_IMAGE_NAME }}:latest
-          tags: ${{ env.IMAGE_NAME }}:staging
+            BASE_IMAGE=${{ env.IMAGE_NAME }}:base
+          tags: ${{ env.IMAGE_NAME }}:latest
           push: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=${{ env.IMAGE_NAME }}:latest
+          cache-to: type=inline
