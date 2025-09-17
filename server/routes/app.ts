@@ -57,6 +57,7 @@ export const renderApp = async (
     isShare?: boolean;
     analytics?: Integration<IntegrationType.Analytics>[];
     allowIndexing?: boolean;
+    imageContentMetadata?: string;
   } = {}
 ) => {
   const {
@@ -66,6 +67,7 @@ export const renderApp = async (
     content = "",
     shortcutIcon = `${env.CDN_URL || ""}/images/favicon-32.png`,
     allowIndexing = true,
+    imageContentMetadata = "",
   } = options;
 
   if (ctx.request.path === "/realtime/") {
@@ -137,7 +139,8 @@ export const renderApp = async (
     .replace(/\{prefetch\}/g, shareId ? "" : prefetchTags)
     .replace(/\{slack-app-id\}/g, env.public.SLACK_APP_ID || "")
     .replace(/\{script-tags\}/g, scriptTags)
-    .replace(/\{csp-nonce\}/g, ctx.state.cspNonce);
+    .replace(/\{csp-nonce\}/g, ctx.state.cspNonce)
+    .replace(/\{image-content-metadata\}/g, imageContentMetadata);
 };
 
 export const renderShare = async (ctx: Context, next: Next) => {
@@ -243,5 +246,8 @@ export const renderShare = async (ctx: Context, next: Next) => {
     rootShareId,
     canonical: canonicalUrl,
     allowIndexing: share?.allowIndexing,
+    imageContentMetadata: team?.avatarUrl
+      ? `${env.URL}${team.avatarUrl}`
+      : undefined,
   });
 };
